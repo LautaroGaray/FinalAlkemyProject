@@ -28,7 +28,7 @@ public class ProductoController {
     public ResponseEntity<?> listarTodos() {
         logger.info("Listando todos los productos");
         try {
-            // Llamada al método asincrónico y espera del resultado
+
             List<ProductoDto> productos = productoService.listarProductos().join();
             return ResponseEntity.ok(productos);
         } catch (Exception e) {

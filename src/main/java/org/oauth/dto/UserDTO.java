@@ -28,7 +28,7 @@ public class UserDTO {
   @Email
   private String username;
 
-  @Size(min=8 , max=20)
+  @Size(min=8 , max=20, message= "Password debe tener entre 8 y 20 caracteres")
   private String password;
 
   private Set<String> roles;
