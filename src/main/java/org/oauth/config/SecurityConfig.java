@@ -45,7 +45,13 @@ public class SecurityConfig {
     log.info("🛡️ Configurando seguridad");
 
     http
+        //For APi Rest
         .csrf(AbstractHttpConfigurer::disable)
+        // For old frameworks (front end)
+        /*.csrf(csrf -> csrf
+            .ignoringRequestMatchers(WHITE_LIST)
+            .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+        )*/
         .cors(cors -> cors.configurationSource(corsConfig()))
         .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(auth -> auth
@@ -81,6 +87,25 @@ public class SecurityConfig {
     var source = new UrlBasedCorsConfigurationSource();
     source.registerCorsConfiguration("/**", config);
     return source;
+
+    /*
+    For traditionals old web
+     CorsConfiguration config = new CorsConfiguration();
+    config.setAllowedOrigins(List.of("http://localhost:8080", "http://localhost:9080", "https://localhost:9443", "http://localhost:3000"));
+//    config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE"));
+ //   config.setAllowedHeaders(List.of("*"));
+    config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE"));
+    config.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-CSRF-TOKEN"));
+    config.setExposedHeaders(List.of("X-CSRF-TOKEN"));
+    config.setAllowCredentials(true);
+    config.setMaxAge(3600L);
+
+
+    var source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration("/**", config);
+    return source;
+
+     */
 
   }
 
