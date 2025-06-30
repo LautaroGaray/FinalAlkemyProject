@@ -25,9 +25,16 @@ public class ProductoController {
     private IProductoService productoService;
 
     @GetMapping
-    public ResponseEntity<List<ProductoDto>> listarTodos() {
+    public ResponseEntity<?> listarTodos() {
         logger.info("Listando todos los productos");
-        return ResponseEntity.ok(productoService.listarProductos());
+        try {
+            // Llamada al método asincrónico y espera del resultado
+            List<ProductoDto> productos = productoService.listarProductos().join();
+            return ResponseEntity.ok(productos);
+        } catch (Exception e) {
+            logger.error("Error al listar productos: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al listar los productos");
+        }
     }
     @PostMapping
     public ResponseEntity<?> crearProducto(@Valid @RequestBody ProductoDto productoDto) {

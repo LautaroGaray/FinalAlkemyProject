@@ -12,6 +12,7 @@ import org.oauth.repository.IProductoRepository;
 import org.oauth.service.IProductoService;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 @Service
@@ -40,12 +41,14 @@ public class ProductoService implements IProductoService {
         return productoMapper.toDto(producto);
     }
 
+    @Async
     @Override
-    public List<ProductoDto> listarProductos() {
-        return productoRepository.findAll()
-                .stream()
-                .map(productoMapper::toDto)
-                .collect(Collectors.toList());
+    public CompletableFuture<List<ProductoDto>> listarProductos() {
+        List<ProductoDto> productos = productoRepository.findAll()
+            .stream()
+            .map(productoMapper::toDto)
+            .collect(Collectors.toList());
+        return CompletableFuture.completedFuture(productos);
     }
 
     @Override
