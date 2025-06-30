@@ -15,4 +15,5 @@ public interface IProductoService {
     void eliminarProducto(String id);
     ProductoDto obtenerPorNombre(String nombre);
     public ProductoDto actualizarProducto(String id, ProductoDto productoDto);
+    Page<Producto> findByEnStock(boolean enStock, Pageable pageable);
 }

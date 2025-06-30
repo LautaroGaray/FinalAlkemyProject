@@ -79,4 +79,11 @@ public class ProductoService implements IProductoService {
                 .orElseThrow(() -> new RuntimeException("El producto no existe"));
         return productoMapper.toDto(producto);
     }
+
+    @Override
+    public Page<ProductoDto> listarProductosPorStock(boolean enStock, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("precio").ascending());
+        Page<Producto> productos = productoRepository.findByEnStock(enStock, pageable);
+        return productos.map(productoMapper::toDto);
+    }
 }

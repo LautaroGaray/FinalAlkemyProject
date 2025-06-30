@@ -11,4 +11,6 @@ import java.util.Optional;
 public interface IProductoRepository extends MongoRepository<Producto, String> {
 
     Optional<Producto> findByNombre(String nombre);
+
+    Page<Producto> findByEnStock(boolean enStock, Pageable pageable);
 }

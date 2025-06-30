@@ -74,4 +74,19 @@ public class ProductoController {
         }
     }
 
+    @GetMapping("/stock")
+    public ResponseEntity<?> listarPorStock(
+        @RequestParam boolean enStock,
+        @RequestParam int page,
+        @RequestParam int size) {
+        logger.info("Listando productos por stock: {}", enStock);
+        try {
+            Page<ProductoDto> productos = productoService.listarProductosPorStock(enStock, page, size);
+            return ResponseEntity.ok(productos);
+        } catch (Exception e) {
+            logger.error("Error al listar productos por stock: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al listar los productos");
+        }
+    }
+
 }
