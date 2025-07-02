@@ -7,13 +7,13 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.oauth.dto.ProductoDto;
 import org.oauth.service.IProductoService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class ProductoControllerTest {
@@ -29,56 +29,84 @@ class ProductoControllerTest {
     MockitoAnnotations.openMocks(this);
   }
 
+  // ----------- LISTAR TODOS -----------
+
   @Test
-  void listarTodos() {
+  void listarTodos_DeberiaRetornarListaProductos_OK() throws Exception {
+    // Arrange
     List<ProductoDto> productos = Arrays.asList(
         new ProductoDto("1", "Producto1", 100.0, true, new HashSet<>()),
         new ProductoDto("2", "Producto2", 200.0, false, new HashSet<>())
     );
-    when(productoService.listarProductos()).thenReturn(productos);
+    when(productoService.listarProductos())
+        .thenReturn(CompletableFuture.completedFuture(productos));
 
-    ResponseEntity<List<ProductoDto>> response = productoController.listarTodos();
+    // Act
+    ResponseEntity<?> response = productoController.listarTodos();
 
-    assertEquals(200, response.getStatusCodeValue());
-    assertEquals(2, response.getBody().size());
+    // Assert
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertNotNull(response.getBody());
+    assertEquals(2, ((List<?>) response.getBody()).size());
     verify(productoService, times(1)).listarProductos();
   }
 
+
+  // ----------- CREAR PRODUCTO -----------
+
   @Test
-  void crearProducto() {
-    ProductoDto productoDto = new ProductoDto(null, "Producto1", 100.0, true, new HashSet<>());
-    ProductoDto productoCreado = new ProductoDto("1", "Producto1", 100.0, true, new HashSet<>());
-    when(productoService.crearProducto(productoDto)).thenReturn(productoCreado);
+  void crearProducto_DeberiaRetornarProductoCreado_Created() throws Exception {
+    // Arrange
+    ProductoDto productoInput = new ProductoDto(null, "NuevoProducto", 120.0, true, new HashSet<>());
+    ProductoDto productoGuardado = new ProductoDto("123", "NuevoProducto", 120.0, true, new HashSet<>());
 
-    ResponseEntity<?> response = productoController.crearProducto(productoDto);
+    when(productoService.crearProducto(productoInput)).thenReturn(productoGuardado);
 
-    assertEquals(201, response.getStatusCodeValue());
-    assertEquals("1", ((ProductoDto) response.getBody()).getId());
-    verify(productoService, times(1)).crearProducto(productoDto);
+    // Act
+    ResponseEntity<?> response = productoController.crearProducto(productoInput);
+
+    // Assert
+    assertEquals(HttpStatus.CREATED, response.getStatusCode());
+    assertEquals("123", ((ProductoDto) response.getBody()).getId());
+    verify(productoService).crearProducto(productoInput);
   }
 
+
+  // ----------- ACTUALIZAR PRODUCTO -----------
+
   @Test
-  void actualizarProducto() {
-    String id = "1";
-    ProductoDto productoDto = new ProductoDto(null, "ProductoActualizado", 150.0, true, new HashSet<>());
-    ProductoDto productoActualizado = new ProductoDto(id, "ProductoActualizado", 150.0, true, new HashSet<>());
-    when(productoService.actualizarProducto(id, productoDto)).thenReturn(productoActualizado);
+  void actualizarProducto_DeberiaActualizarYRetornar_OK() throws Exception {
+    // Arrange
+    String id = "abc";
+    ProductoDto updateDto = new ProductoDto(null, "Editado", 150.0, false, new HashSet<>());
+    ProductoDto actualizado = new ProductoDto(id, "Editado", 150.0, false, new HashSet<>());
 
-    ResponseEntity<?> response = productoController.actualizarProducto(id, productoDto);
+    when(productoService.actualizarProducto(id, updateDto)).thenReturn(actualizado);
 
-    assertEquals(200, response.getStatusCodeValue());
-    assertEquals(id, ((ProductoDto) response.getBody()).getId());
-    verify(productoService, times(1)).actualizarProducto(id, productoDto);
+    // Act
+    ResponseEntity<?> response = productoController.actualizarProducto(id, updateDto);
+
+    // Assert
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertEquals("abc", ((ProductoDto) response.getBody()).getId());
+    verify(productoService).actualizarProducto(id, updateDto);
   }
 
+  // ----------- ELIMINAR PRODUCTO -----------
+
   @Test
-  void eliminarProducto() {
-    String id = "1";
+  void eliminarProducto_DeberiaEliminarYRetornar_NoContent() {
+    // Arrange
+    String id = "abc";
     doNothing().when(productoService).eliminarProducto(id);
 
+    // Act
     ResponseEntity<?> response = productoController.eliminarProducto(id);
 
-    assertEquals(204, response.getStatusCodeValue());
-    verify(productoService, times(1)).eliminarProducto(id);
+    // Assert
+    assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
+    verify(productoService).eliminarProducto(id);
   }
+
+
 }

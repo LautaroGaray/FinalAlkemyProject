@@ -15,10 +15,12 @@ services:
       mongodb:
         condition: service_healthy
     environment:
-      - SPRING_DATA_MONGODB_URI=mongodb://user:pass@mongodb:27017/tienda?authSource=admin
+        - SPRING_DATA_MONGODB_URI=mongodb://user:pass@mongodb:27017/tienda?authSource=admin
+        - JWT_SECRET=${JWT_SECRET}
+        - JWT_EXPIRATION_MS=${JWT_EXPIRATION_MS}
 
   mongodb:
-    image: mongodb/mongodb-atlas-local
+    image: mongo:latest
     environment:
       - MONGODB_INITDB_ROOT_USERNAME=user
       - MONGODB_INITDB_ROOT_PASSWORD=pass

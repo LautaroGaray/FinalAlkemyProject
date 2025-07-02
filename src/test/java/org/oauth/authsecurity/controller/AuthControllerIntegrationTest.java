@@ -1,49 +1,105 @@
 package org.oauth.authsecurity.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.oauth.authsecurity.dto.AuthRequest;
-import org.oauth.authsecurity.dto.AuthResponse;
 import org.oauth.dto.UserDTO;
+import org.oauth.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.web.servlet.MockMvc;
+import org.testcontainers.containers.MongoDBContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import java.util.Set;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @ExtendWith(SpringExtension.class)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest
+@AutoConfigureMockMvc
+
+@Testcontainers
 class AuthControllerIntegrationTest {
 
+    @Container
+    static MongoDBContainer mongoDBContainer = new MongoDBContainer("mongo:latest");
+
+    @DynamicPropertySource
+    static void setProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.data.mongodb.uri", mongoDBContainer::getReplicaSetUrl);
+    }
+
     @Autowired
-    private TestRestTemplate restTemplate;
+    private MockMvc mockMvc;
 
-    @Test
-    void register() {
-        UserDTO userDTO = new UserDTO();
-        userDTO.setName("Test User");
-        userDTO.setUsername("testuser@example.com");
-        userDTO.setPassword("password123");
+    @Autowired
+    private ObjectMapper objectMapper;
 
-        ResponseEntity<AuthResponse> response = restTemplate.postForEntity("/api/v1/auth/register", userDTO, AuthResponse.class);
+    @Autowired
+    private UserRepository userRepository;
 
-        assertEquals(200, response.getStatusCodeValue());
-
+    @BeforeEach
+    void setUp() {
+        userRepository.deleteAll();
     }
 
     @Test
-    void login() {
-        AuthRequest authRequest = new AuthRequest();
-        authRequest.setUsername("lautagaray10@hotmail.com");
-        authRequest.setPassword("myabc1234None");
+    void register() throws Exception {
+        // Arrange
+        UserDTO validUserRequest = UserDTO.builder()
+            .name("Test User")
+            .username("test@example.com")
+            .password("securePassword123")
+            .roles(Set.of("USER"))
+            .build();
 
-        ResponseEntity<AuthResponse> response = restTemplate.postForEntity("/api/v1/auth/login", authRequest, AuthResponse.class);
-
-        assertEquals(200, response.getStatusCodeValue());
-
+        // Act & Assert
+        mockMvc.perform(post("/api/v1/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(validUserRequest)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.token").exists())
+            .andExpect(jsonPath("$.token").isString())
+            .andExpect(jsonPath("$.token").isNotEmpty());
     }
+
+    @Test
+    void login() throws Exception {
+        // Arrange - Register a test user first
+        UserDTO testUser = UserDTO.builder()
+            .name("Auth Test User")
+            .username("auth@test.com")
+            .password("testPassword")
+            .roles(Set.of("USER"))
+            .build();
+
+        mockMvc.perform(post("/api/v1/auth/register")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(testUser)));
+
+        AuthRequest validCredentials = AuthRequest.builder()
+            .username("auth@test.com")
+            .password("testPassword")
+            .build();
+
+        // Act & Assert
+        mockMvc.perform(post("/api/v1/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(validCredentials)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.token").exists())
+            .andExpect(jsonPath("$.token").isString())
+            .andExpect(jsonPath("$.token").isNotEmpty());
+    }
+
 }

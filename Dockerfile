@@ -4,25 +4,35 @@ FROM eclipse-temurin:17.0.15_6-jdk
 #openjdk:17-jdk  //This image is officially deprecated
 # amazoncorretto:17 es otra opcion disponible
 
-# INFORMAR EL PUERTO DONDE SE EJECUTA EL CONTENEDOR (INFORMATIVO)
-EXPOSE 8080
 
-# DEFINIR DIRECTORIO RAIZ DE NUESTRO CONTENEDOR
-WORKDIR /root
+# Establece el directorio de trabajo
+WORKDIR /app
 
-# COPIAR Y PEGAR ARCHIVOS POM Y MAVEN DENTRO DEL CONTENEDOR
-COPY ./pom.xml /root
-COPY ./.mvn /root/.mvn
-COPY ./mvnw /root
+#  Primero copia SOLO los archivos del wrapper de Maven
+COPY mvnw* ./
 
-# DESCARGAR LAS DEPENDENCIAS
-RUN ./mvnw dependency:go-offline
+#  Copia tanto mvnw como mvnw.cmd. Copia la configuración del wrapper de Maven
+COPY .mvn .mvn
 
-# COPIAR EL CODIGO FUENTE DENTRO DEL CONTENEDOR
-COPY ./src /root/src
+# Arregla los finales de línea y hace ejecutable # Convierte CRLF de Windows a LF de Linux y añade permisos de ejecución
+RUN sed -i 's/\r$//' mvnw && \
+    chmod +x mvnw
 
-# CONSTRUIR NUESTRA APLICACION
+#  Verifica que mvnw funciona
+RUN ./mvnw --version
+
+#  Copia el archivo POM para resolver dependencias
+COPY pom.xml .
+
+# Descarga las dependencias para uso offline
+RUN ./mvnw dependency:go-offline -B
+
+#  Copia el código fuente
+COPY src src
+
+# Construye la aplicación #  Compila y empaqueta la aplicación, saltando tests
 RUN ./mvnw clean install -DskipTests
 
+
 # LEVANTAR NUESTRA APLICACION CUANDO EL CONTENEDOR INICIE
-ENTRYPOINT ["java","-jar","/root/target/clase11docker-0.0.1-SNAPSHOT.jar"]
+ENTRYPOINT ["java","-jar","/app/target/FinalProjectAlkemy-0.0.1-SNAPSHOT.jar"]

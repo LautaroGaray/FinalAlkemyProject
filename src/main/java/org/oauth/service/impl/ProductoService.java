@@ -7,6 +7,9 @@ import lombok.RequiredArgsConstructor;
 import org.oauth.mapper.IProductoMapper;
 import org.oauth.model.Producto;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.oauth.repository.IProductoRepository;
 import org.oauth.service.IProductoService;
@@ -73,16 +76,24 @@ public class ProductoService implements IProductoService {
         return productoMapper.toDto(productoActualizado);
     }
 
+
+
     @Override
     public ProductoDto obtenerPorNombre(String nombre) {
         Producto producto = productoRepository.findByNombre(nombre)
                 .orElseThrow(() -> new RuntimeException("El producto no existe"));
         return productoMapper.toDto(producto);
     }
-
+/*
     @Override
     public Page<ProductoDto> listarProductosPorStock(boolean enStock, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("precio").ascending());
+        Page<Producto> productos = productoRepository.findByEnStock(enStock, pageable);
+        return productos.map(productoMapper::toDto);
+    }
+*/
+    @Override
+    public Page<ProductoDto> listarProductosPorStock(boolean enStock, Pageable pageable) {
         Page<Producto> productos = productoRepository.findByEnStock(enStock, pageable);
         return productos.map(productoMapper::toDto);
     }

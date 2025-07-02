@@ -34,7 +34,7 @@ class AuthControllerTest {
         userDTO.setUsername("lautagaray10@hotmail.com");
         userDTO.setPassword("myabc1234None");
 
-        AuthResponse authResponse = new AuthResponse("{reeplace}");
+        AuthResponse authResponse = new AuthResponse("token123");
         when(authService.register(userDTO)).thenReturn(authResponse);
 
         ResponseEntity<AuthResponse> response = authController.register(userDTO);
@@ -50,7 +50,7 @@ class AuthControllerTest {
         authRequest.setUsername("lautagaray10@hotmail.com");
         authRequest.setPassword("myabc1234None");
 
-        AuthResponse authResponse = new AuthResponse("{reeplace}");
+        AuthResponse authResponse = new AuthResponse("token123");
         when(authService.authenticate(authRequest)).thenReturn(authResponse);
 
         ResponseEntity<AuthResponse> response = authController.login(authRequest);
